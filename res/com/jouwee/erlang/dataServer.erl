@@ -1,15 +1,30 @@
 %% -*- erlang -*-
 %% Script Erlang para o servidor de dados (O que controla a fila)
 -module(dataServer).
--export([main/1, testMethod/1]).
+-export([main/1, gerenciadorFila/3, produtor/2, criaListaVazia/1]).
 
 main(_) ->
-    io:format("spawn ~s ~p\n", [os:getpid(), self()]),
-    Pidzinho = spawn(?MODULE, testMethod, [self()]),
-    io:format("fuck ~p\n", [Pidzinho]),
+    GerenciadorFila = spawn(?MODULE, gerenciadorFila, [self(), "GerenciadorFila", 10]),
+    spawn(?MODULE, produtor, [self(), "Produtor1"]),
+    messageReceiveLoop().
+
+messageReceiveLoop() ->
     receive
-        {data, DataContent} -> io:format("Message", [])
+        {log, Name, Pid, Message} -> 
+            io:format("~s ~p ~s\n", [Name, Pid, Message]),
+            messageReceiveLoop()
     end.
 
-testMethod(Pid) ->
-    Pid ! {data, 1}.
+gerenciadorFila(MainPid, Name, TamanhoFila) ->
+    MainPid ! {log, Name, self(), "Iniciei o gerenciador da fila"},
+    Fila = criaListaVazia(TamanhoFila),
+    MainPid ! {log, Name, self(), Fila}.
+
+criaListaVazia(0) ->
+    [];
+criaListaVazia(T) ->
+    lists:append([65], criaListaVazia(T - 1)).    
+
+produtor(MainPid, Name) ->
+    MainPid ! {log, Name, self(), "Iniciado"}.
+
