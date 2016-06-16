@@ -6,6 +6,7 @@
             <name>Feevale_Erlang_FIFO</name>
             <explicit-platform explicit-source-supported="true"/>
             <source-roots>
+                <root id="src.res.dir" name="Resources Packages"/>
                 <root id="src.dir"/>
             </source-roots>
             <test-roots>

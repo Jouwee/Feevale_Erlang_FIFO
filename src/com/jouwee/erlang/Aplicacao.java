@@ -7,6 +7,8 @@ package com.jouwee.erlang;
  */
 public class Aplicacao {
     
-    
+    public static void main(String[] args) {
+        Escript.run("dataServer.erl");
+    }
     
 }
