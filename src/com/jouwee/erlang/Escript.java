@@ -24,6 +24,7 @@ public class Escript {
             
             ProcessBuilder builderCompilador = new ProcessBuilder(COMPILADOR, resourceName);
             builderCompilador.directory(new File(System.getProperty("java.io.tmpdir")));
+            builderCompilador.inheritIO();
             Process compilacao = builderCompilador.start();
             System.out.println("compilando");
             compilacao.waitFor();
