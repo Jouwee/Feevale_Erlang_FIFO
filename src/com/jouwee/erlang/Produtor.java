@@ -14,9 +14,10 @@ public class Produtor extends Agente {
      * 
      * @param name 
      * @param status 
+     * @param percentDone 
      */
-    public Produtor(String name, StatusAgente status) {
-        super(name, status);
+    public Produtor(String name, StatusAgente status, float percentDone) {
+        super(name, status, percentDone);
     }
     
 }

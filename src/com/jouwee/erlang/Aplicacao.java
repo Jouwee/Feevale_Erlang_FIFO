@@ -36,6 +36,7 @@ public class Aplicacao extends JFrame {
     private void initGui() {
         setSize(1024, 600);
         setResizable(false);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(new PanelSimulacao(model));
         getContentPane().add(new PanelControle(model), BorderLayout.SOUTH);

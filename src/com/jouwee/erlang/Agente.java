@@ -12,17 +12,21 @@ public abstract class Agente {
     /** Nome do agente */
     private final String name;
     /** Status */
-    private StatusAgente status;
+    private final StatusAgente status;
+    /** Percentual feito */
+    private final float percentDone;
 
     /**
      * Cria novo agente
      * 
      * @param name 
      * @param status 
+     * @param percentDone 
      */
-    public Agente(String name, StatusAgente status) {
+    public Agente(String name, StatusAgente status, float percentDone) {
         this.name = name;
         this.status = status;
+        this.percentDone = percentDone;
     }
     
     /**
@@ -50,6 +54,15 @@ public abstract class Agente {
      */
     public StatusAgente getStatus() {
         return status;
+    }
+
+    /**
+     * Retorna o percentual feito
+     * 
+     * @return float
+     */
+    public float getPercentDone() {
+        return percentDone;
     }
     
 }

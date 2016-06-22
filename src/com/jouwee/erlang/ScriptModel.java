@@ -20,7 +20,9 @@ public class ScriptModel {
     /** Itens da fila */
     private ItemFila[] fila;
     /** Produtores */
-    private Map<String, Produtor> produtores;
+    private final Map<String, Produtor> produtores;
+    /** Consumidores */
+    private final Map<String, Consumidor> consumidores;
 
     /**
      * Cria novo modelo
@@ -28,6 +30,7 @@ public class ScriptModel {
     public ScriptModel() {
         this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.produtores = new HashMap<>();
+        this.consumidores = new HashMap<>();
         this.parameters = new ScriptParameters();
     }
 
@@ -57,17 +60,7 @@ public class ScriptModel {
      */
     public void putProdutor(Produtor produtor) {
         produtores.put(produtor.getName(), produtor);
-        propertyChangeSupport.firePropertyChange("produtores", null, fila);
-    }
-    
-    /**
-     * Retorna o produtore
-     * 
-     * @param name
-     * @return Produtor
-     */
-    public Produtor getProdutor(String name) {
-        return produtores.get(name);
+        propertyChangeSupport.firePropertyChange("produtores", null, produtores);
     }
     
     /**
@@ -77,6 +70,25 @@ public class ScriptModel {
      */
     public List<Produtor> getProdutores() {
         return new ArrayList<>(produtores.values());
+    }
+
+    /**
+     * Adiciona consumidor na lista
+     * 
+     * @param consumidor 
+     */
+    public void putConsumidor(Consumidor consumidor) {
+        consumidores.put(consumidor.getName(), consumidor);
+        propertyChangeSupport.firePropertyChange("consumidores", null, consumidores);
+    }
+    
+    /**
+     * Retorna os consumidores
+     * 
+     * @return {@code Collection<Consumidor>}
+     */
+    public List<Consumidor> getConsumidores() {
+        return new ArrayList<>(consumidores.values());
     }
 
     /**
@@ -95,6 +107,19 @@ public class ScriptModel {
      */
     public ScriptParameters getParameters() {
         return parameters;
+    }
+
+    /**
+     * Retorna um agente
+     * 
+     * @param processName
+     * @return Agente
+     */
+    public Agente getAgente(String processName) {
+        if (produtores.containsKey(processName)) {
+            return produtores.get(processName);
+        }
+        return consumidores.get(processName);
     }
     
 }

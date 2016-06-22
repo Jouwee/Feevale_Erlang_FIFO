@@ -1,24 +1,39 @@
 %% -*- erlang -*-
 %% Script Erlang para o servidor de dados (O que controla a fila)
 -module(dataServer).
--export([main/1, criaProdutores/2, gerenciadorFila/3, produtor/3, criaListaVazia/1, loopProducao/3, consumidor/3, loopConsumidor/3]).
+-export([main/1, criaProdutores/5, criaConsumidores/5, gerenciadorFila/3, produtor/6, criaListaVazia/1, loopProducao/6, consumidor/6, loopConsumidor/6]).
 %% -----------------------------------------------------------------------------
 %% Função principal do Script
-main([TamanhoFila, StringNumeroProdutores, NumeroConsumidores, TempoMedioProducao, DesvioPadraoProducao, TempoMedioConsumo, DesvioPadraoConsumo]) ->
+main([StringTamanhoFila, StringNumeroProdutores, StringNumeroConsumidores, StringTempoMedioProducao, StringDesvioPadraoProducao, StringTempoMedioConsumo, StringDesvioPadraoConsumo, StringTempoEspera]) ->
+    %% Converte os parâmetros para numeros
+    {TamanhoFila, Rest} = string:to_integer(StringTamanhoFila), 
     {NumeroProdutores, Rest} = string:to_integer(StringNumeroProdutores), 
-    GerenciadorFila = spawn(?MODULE, gerenciadorFila, [self(), "GerenciadorFila", 10]),
-    criaProdutores(GerenciadorFila, NumeroProdutores),
-    spawn(?MODULE, consumidor, [self(), "Consumidor1", GerenciadorFila]),
-    spawn(?MODULE, consumidor, [self(), "Consumidor2", GerenciadorFila]),
+    {NumeroConsumidores, Rest} = string:to_integer(StringNumeroConsumidores), 
+    {TempoMedioProducao, Rest} = string:to_integer(StringTempoMedioProducao), 
+    {DesvioPadraoProducao, Rest} = string:to_integer(StringDesvioPadraoProducao), 
+    {TempoMedioConsumo, Rest} = string:to_integer(StringTempoMedioConsumo), 
+    {DesvioPadraoConsumo, Rest} = string:to_integer(StringDesvioPadraoConsumo), 
+    {TempoEspera, Rest} = string:to_integer(StringTempoEspera), 
+    GerenciadorFila = spawn(?MODULE, gerenciadorFila, [self(), "GerenciadorFila", TamanhoFila]),
+    criaProdutores(GerenciadorFila, NumeroProdutores, TempoMedioProducao, DesvioPadraoProducao, TempoEspera),
+    criaConsumidores(GerenciadorFila, NumeroConsumidores, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera),
     messageReceiveLoop().
 %% -----------------------------------------------------------------------------
 %% Cria os produtores
-criaProdutores(GerenciadorFila, 0) ->
+criaProdutores(GerenciadorFila, 0, TempoMedioProducao, DesvioPadraoProducao, TempoEspera) ->
     done;
-criaProdutores(GerenciadorFila, NumeroProdutores) ->
+criaProdutores(GerenciadorFila, NumeroProdutores, TempoMedioProducao, DesvioPadraoProducao, TempoEspera) ->
     NomeProdutor = string:concat("Produtor",stringFormat(NumeroProdutores)),
-    spawn(?MODULE, produtor, [self(), NomeProdutor, GerenciadorFila]),
-    criaProdutores(GerenciadorFila, NumeroProdutores-1).
+    spawn(?MODULE, produtor, [self(), NomeProdutor, GerenciadorFila, TempoMedioProducao, DesvioPadraoProducao, TempoEspera]),
+    criaProdutores(GerenciadorFila, NumeroProdutores-1, TempoMedioProducao, DesvioPadraoProducao, TempoEspera).
+%% -----------------------------------------------------------------------------
+%% Cria os consumidores
+criaConsumidores(GerenciadorFila, 0, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera) ->
+    done;
+criaConsumidores(GerenciadorFila, NumeroConsumidores, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera) ->
+    NomeConsumidor = string:concat("Consumidor",stringFormat(NumeroConsumidores)),
+    spawn(?MODULE, consumidor, [self(), NomeConsumidor, GerenciadorFila, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera]),
+    criaConsumidores(GerenciadorFila, NumeroConsumidores-1, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera).
 %% -----------------------------------------------------------------------------
 %% Loop de recebimento de mensagens para printar no output
 messageReceiveLoop() ->
@@ -102,48 +117,66 @@ criaListaVazia(T) ->
 %%                               PRODUTOR
 %% -----------------------------------------------------------------------------
 %% Método principal do processo de produção
-produtor(Logger, Name, GerenciadorFila) ->
+produtor(Logger, Name, GerenciadorFila, TempoMedioProducao, DesvioPadraoProducao, TempoEspera) ->
+    {A1,A2,A3} = now(), 
+    random:seed(A1, A2, A3), 
+    random:uniform(),
     Logger ! {log, Name, self(), produtorStarted},
-    loopProducao(Logger, Name, GerenciadorFila).
+    loopProducao(Logger, Name, GerenciadorFila, TempoMedioProducao, DesvioPadraoProducao, TempoEspera).
 %% -----------------------------------------------------------------------------
 %% Loop de producao
-loopProducao(Logger, Name, GerenciadorFila) ->
+loopProducao(Logger, Name, GerenciadorFila, TempoMedioProducao, DesvioPadraoProducao, TempoEspera) ->
     Logger ! {log, Name, self(), {status, waiting}},
-    timer:sleep(1000),
+    timer:sleep(TempoEspera),
     GerenciadorFila ! {reserveSpace, Name, self()},
     receive
         listIsFull ->
             Logger ! {log, Name, self(), "Lista estava cheia, não vou produzir"};
         reserved -> 
             Logger ! {log, Name, self(), {status, producing}},
-            timer:sleep(3000),
+            wait(Logger, Name, TempoMedioProducao + (random:uniform(DesvioPadraoProducao * 2) - DesvioPadraoProducao)),
             GerenciadorFila ! {itemProduced, Name}
     end,
-    loopProducao(Logger, Name, GerenciadorFila).
+    loopProducao(Logger, Name, GerenciadorFila, TempoMedioProducao, DesvioPadraoProducao, TempoEspera).
 %% -----------------------------------------------------------------------------
 %%                               CONSUMIDOR
 %% -----------------------------------------------------------------------------
 %% Método principal do processo de consumidor
-consumidor(Logger, Name, GerenciadorFila) ->
-    Logger ! {log, Name, self(), "started"},
-    loopConsumidor(Logger, Name, GerenciadorFila).
+consumidor(Logger, Name, GerenciadorFila, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera) ->
+    {A1,A2,A3} = now(), 
+    random:seed(A1, A2, A3), 
+    random:uniform(),
+    Logger ! {log, Name, self(), consumidorStarted},
+    loopConsumidor(Logger, Name, GerenciadorFila, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera).
 %% -----------------------------------------------------------------------------
 %% Loop de consumidor
-loopConsumidor(Logger, Name, GerenciadorFila) ->
-    timer:sleep(1000),
-    Logger ! {log, Name, self(), " testaSeTemItensAConsumir"},
+loopConsumidor(Logger, Name, GerenciadorFila, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera) ->
+    Logger ! {log, Name, self(), {status, waiting}},
+    timer:sleep(TempoEspera),
     GerenciadorFila ! {reserveConsumeItem, Name, self()},
     receive
         listIsEmpty -> 
-            Logger ! {log, Name, self(), "semItensAConsumir"};
+            done;
         reserved -> 
-            Logger ! {log, Name, self(), "vouConsumir"},
-            timer:sleep(3000),
+            Logger ! {log, Name, self(), {status, consuming}},
+            wait(Logger, Name, TempoMedioConsumo + (random:uniform(DesvioPadraoConsumo * 2) - DesvioPadraoConsumo)),
             GerenciadorFila ! {itemConsumed, Name}
     end,
-    loopConsumidor(Logger, Name, GerenciadorFila).
+    loopConsumidor(Logger, Name, GerenciadorFila, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera).
 %% -----------------------------------------------------------------------------
 %%                               UTILITARIOS
+%% -----------------------------------------------------------------------------
+%% Aguarda um tempo
+wait(Logger, Name, Total) -> wait(Logger, Name, Total, Total).
+wait(Logger, Name, Total, Remaining) -> 
+    Logger ! {log, Name, self(), {progress, 1 - (Remaining / Total)}},
+    if 
+        Remaining < 10 ->
+            timer:sleep(Remaining);
+        true ->
+            timer:sleep(10),
+            wait(Logger, Name, Total, Remaining - 10)
+    end.
 %% -----------------------------------------------------------------------------
 %% Retorna o índice de um item em uma lista
 indexOfStatus({Item}, List) -> indexOfStatus({Item}, List, 1).

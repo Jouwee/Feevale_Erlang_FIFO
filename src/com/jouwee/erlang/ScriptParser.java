@@ -139,7 +139,9 @@ public class ScriptParser implements ScriptPatterns {
     private void testMatchers(String processName, String pid, String content) {
         testUpdateList(content);
         testProdutorStarted(processName, pid, content);
+        testConsumidorStarted(processName, pid, content);
         testStatusAgent(processName, content);
+        testProgressAgent(processName, content);
     }
     
     /**
@@ -154,7 +156,22 @@ public class ScriptParser implements ScriptPatterns {
         if (!matcher.find()) {
             return;
         }
-        model.putProdutor(new Produtor(processName, StatusAgente.WAITING));
+        model.putProdutor(new Produtor(processName, StatusAgente.WAITING, 0));
+    }
+    
+    /**
+     * Testa se um produtor foi criado
+     * 
+     * @param processName
+     * @param pid
+     * @param content 
+     */
+    private void testConsumidorStarted(String processName, String pid, String content) {
+        Matcher matcher = CONSUMIDOR_STARTED.matcher(content);
+        if (!matcher.find()) {
+            return;
+        }
+        model.putConsumidor(new Consumidor(processName, StatusAgente.WAITING, 0));
     }
     
     /**
@@ -169,7 +186,33 @@ public class ScriptParser implements ScriptPatterns {
         if (!matcher.find()) {
             return;
         }
-        model.putProdutor(new Produtor(processName, StatusAgente.forScript(matcher.group(1))));
+        Agente agente = model.getAgente(processName);
+        if (processName.startsWith("Produtor")) {
+            model.putProdutor(new Produtor(processName, StatusAgente.forScript(matcher.group(1)), agente.getPercentDone()));
+        } else {
+            model.putConsumidor(new Consumidor(processName, StatusAgente.forScript(matcher.group(1)), agente.getPercentDone()));
+        }
+    }
+    
+    /**
+     * Testa o progresso de um agente
+     * 
+     * @param processName
+     * @param pid
+     * @param content 
+     */
+    private void testProgressAgent(String processName, String content) {
+        Matcher matcher = PROGRESS_AGENTE.matcher(content);
+        if (!matcher.find()) {
+            return;
+        }
+        float progress = Float.parseFloat(matcher.group(1));
+        Agente agente = model.getAgente(processName);
+        if (processName.startsWith("Produtor")) {
+            model.putProdutor(new Produtor(processName, agente.getStatus(), progress));
+        } else {
+            model.putConsumidor(new Consumidor(processName, agente.getStatus(), progress));
+        }
     }
     
     /**

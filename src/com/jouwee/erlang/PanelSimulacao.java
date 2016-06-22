@@ -20,6 +20,10 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
 
     /** Tamanho dos objetos de agentes */
     private static final Dimension SIZE_AGENT = new Dimension(150, 60);
+    /** Tamanho dos objetos de item da fila */
+    private static final int SIZE_ITEM_FILA = 60;
+    /** Arco */
+    private static final int ARC = 10;
     /** Modelo da saída do Script */
     private ScriptModel model;
 
@@ -48,10 +52,13 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2d.setColor(Color.WHITE);
         g2d.fill(g2d.getClipBounds());
         paintProdutores(g2d);
         paintFila(g2d);
+        paintConsumidores(g2d);
         g2d.dispose();
     }
 
@@ -88,6 +95,38 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
     }
     
     /**
+     * Desenha os consumidores
+     * 
+     * @param g 
+     */
+    private void paintConsumidores(Graphics g) {
+        if (model.getFila() == null) {
+            return;
+        }
+        Graphics2D g2d = (Graphics2D) g.create();
+        List<Consumidor> consumidores = model.getConsumidores();
+        for (int i = 0; i < consumidores.size(); i++) {
+            paintConsumidor(g2d, consumidores.get(i), i);
+        }
+        g2d.dispose();
+    }
+
+    /**
+     * Desenha um produtor
+     * 
+     * @param g 
+     * @param produtor
+     * @param i
+     */
+    private void paintConsumidor(Graphics g, Consumidor produtor, int i) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        int x = 30 + (i * (SIZE_AGENT.width + 5));
+        int y = 355;
+        paintAgent(g, produtor, x, y);
+        g2d.dispose();
+    }
+    
+    /**
      * Desenha o agente 
      * 
      * @param g
@@ -97,15 +136,13 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
      */
     private void paintAgent(Graphics g, Agente agente, int x, int y) {
         Graphics2D g2d = (Graphics2D) g.create();
-        int arc = 10;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2d.setColor(agente.getColor());
-        g2d.fillRoundRect(x, y, SIZE_AGENT.width, SIZE_AGENT.height, arc, arc);
+        g2d.fillRoundRect(x, y, SIZE_AGENT.width, SIZE_AGENT.height, ARC, ARC);
         g2d.setColor(Color.BLACK);
-        g2d.drawRoundRect(x, y, SIZE_AGENT.width, SIZE_AGENT.height, arc, arc);
+        g2d.drawRoundRect(x, y, SIZE_AGENT.width, SIZE_AGENT.height, ARC, ARC);
         g2d.setFont(new Font("Calibri", Font.BOLD, 16));
         g2d.drawString(agente.getName(), x + 5, y + 20);
+        g2d.fillRect(x, y + 50, (int)(SIZE_AGENT.width * agente.getPercentDone()), 5);
         g2d.dispose();
     }
     
@@ -135,11 +172,12 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
      */
     private void paintItemFila(Graphics g, ItemFila item, int i) {
         Graphics2D g2d = (Graphics2D) g.create();
-        int size = 30;
-        int x = 30 + (i * (size + 5));
-        int y = 100;
+        int x = 30 + ((i/4) * (SIZE_ITEM_FILA + 5));
+        int y = 95 + ((i%4) * (SIZE_ITEM_FILA + 5));
         g2d.setColor(item.getStatus().getColor());
-        g2d.fillRect(x, y, size, size);
+        g2d.fillRoundRect(x, y, SIZE_ITEM_FILA, SIZE_AGENT.height, ARC, ARC);
+        g2d.setColor(Color.BLACK);
+        g2d.drawRoundRect(x, y, SIZE_ITEM_FILA, SIZE_AGENT.height, ARC, ARC);
         g2d.dispose();
     }
     

@@ -21,7 +21,6 @@ public class ErlangRunner {
     public static void run(String resourceName, ScriptModel model) {
         try {
             String fileName = copyStream(resourceName);
-            
             ProcessBuilder builderCompilador = new ProcessBuilder(COMPILADOR, resourceName);
             builderCompilador.directory(new File(System.getProperty("java.io.tmpdir")));
             builderCompilador.inheritIO();
@@ -30,9 +29,16 @@ public class ErlangRunner {
             compilacao.waitFor();
             System.out.println("compilou");
             // Converte os parâmetros para String
+            String sTamanhoFila = String.valueOf(model.getParameters().getTamanhoFila());
             String sNumeroProdutores = String.valueOf(model.getParameters().getNumeroProdutores());
+            String sTempoMedioProducao = String.valueOf(model.getParameters().getTempoMedioProducao());
+            String sDesvioPadraoTempoProducao = String.valueOf(model.getParameters().getDesvioPadraoTempoProducao());
+            String sNumeroConsumidores = String.valueOf(model.getParameters().getNumeroConsumidores());
+            String sTempoMedioConsumo = String.valueOf(model.getParameters().getTempoMedioConsumo());
+            String sDesvioPadraoTempoConsumo = String.valueOf(model.getParameters().getDesvioPadraoTempoConsumo());
+            String sTempoEspera = String.valueOf(model.getParameters().getTempoEspera());
             // Executa o Script Erlang
-            ProcessBuilder builder = new ProcessBuilder(EXECUTAVEL, "-noshell", "-run", "dataServer", "main", "10", sNumeroProdutores, "2", "1000", "100", "1000", "100");
+            ProcessBuilder builder = new ProcessBuilder(EXECUTAVEL, "-noshell", "-run", "dataServer", "main", sTamanhoFila, sNumeroProdutores, sNumeroConsumidores, sTempoMedioProducao, sDesvioPadraoTempoProducao, sTempoMedioConsumo, sDesvioPadraoTempoConsumo, sTempoEspera);
             builder.directory(new File(System.getProperty("java.io.tmpdir")));
             Process process = builder.start();
             new ScriptParser(model).parseInBackground(process.getInputStream());
