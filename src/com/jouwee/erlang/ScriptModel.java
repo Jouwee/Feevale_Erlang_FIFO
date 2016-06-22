@@ -15,6 +15,8 @@ public class ScriptModel {
     
     /** Suporte a PropertyChange */
     public final PropertyChangeSupport propertyChangeSupport;
+    /** Parâmetros do Script */
+    private final ScriptParameters parameters;
     /** Itens da fila */
     private ItemFila[] fila;
     /** Produtores */
@@ -26,6 +28,7 @@ public class ScriptModel {
     public ScriptModel() {
         this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.produtores = new HashMap<>();
+        this.parameters = new ScriptParameters();
     }
 
     /**
@@ -58,6 +61,16 @@ public class ScriptModel {
     }
     
     /**
+     * Retorna o produtore
+     * 
+     * @param name
+     * @return Produtor
+     */
+    public Produtor getProdutor(String name) {
+        return produtores.get(name);
+    }
+    
+    /**
      * Retorna os produtores
      * 
      * @return {@code Collection<Produtor>}
@@ -73,6 +86,15 @@ public class ScriptModel {
      */
     public PropertyChangeSupport getPropertyChangeSupport() {
         return propertyChangeSupport;
+    }
+
+    /**
+     * Retorna os parâmetros do Script
+     * 
+     * @return int
+     */
+    public ScriptParameters getParameters() {
+        return parameters;
     }
     
 }

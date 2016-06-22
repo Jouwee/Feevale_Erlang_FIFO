@@ -1,8 +1,11 @@
 package com.jouwee.erlang;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -14,7 +17,9 @@ import javax.swing.JComponent;
  * @author Nicolas Pohren
  */
 public class PanelSimulacao extends JComponent implements PropertyChangeListener {
-    
+
+    /** Tamanho dos objetos de agentes */
+    private static final Dimension SIZE_AGENT = new Dimension(150, 60);
     /** Modelo da saída do Script */
     private ScriptModel model;
 
@@ -76,11 +81,31 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
      */
     private void paintProdutor(Graphics g, Produtor produtor, int i) {
         Graphics2D g2d = (Graphics2D) g.create();
-        int size = 30;
-        int x = 30 + (i * (size + 5));
+        int x = 30 + (i * (SIZE_AGENT.width + 5));
         int y = 30;
-        g2d.setColor(Color.RED);
-        g2d.fillRect(x, y, size, size);
+        paintAgent(g, produtor, x, y);
+        g2d.dispose();
+    }
+    
+    /**
+     * Desenha o agente 
+     * 
+     * @param g
+     * @param produtor 
+     * @param x
+     * @param y
+     */
+    private void paintAgent(Graphics g, Agente agente, int x, int y) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        int arc = 10;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.setColor(agente.getColor());
+        g2d.fillRoundRect(x, y, SIZE_AGENT.width, SIZE_AGENT.height, arc, arc);
+        g2d.setColor(Color.BLACK);
+        g2d.drawRoundRect(x, y, SIZE_AGENT.width, SIZE_AGENT.height, arc, arc);
+        g2d.setFont(new Font("Calibri", Font.BOLD, 16));
+        g2d.drawString(agente.getName(), x + 5, y + 20);
         g2d.dispose();
     }
     

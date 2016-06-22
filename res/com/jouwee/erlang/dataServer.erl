@@ -1,17 +1,24 @@
 %% -*- erlang -*-
 %% Script Erlang para o servidor de dados (O que controla a fila)
 -module(dataServer).
--export([main/1, gerenciadorFila/3, produtor/3, criaListaVazia/1, loopProducao/3, consumidor/3, loopConsumidor/3]).
+-export([main/1, criaProdutores/2, gerenciadorFila/3, produtor/3, criaListaVazia/1, loopProducao/3, consumidor/3, loopConsumidor/3]).
 %% -----------------------------------------------------------------------------
 %% Função principal do Script
-main(_) ->
+main([TamanhoFila, StringNumeroProdutores, NumeroConsumidores, TempoMedioProducao, DesvioPadraoProducao, TempoMedioConsumo, DesvioPadraoConsumo]) ->
+    {NumeroProdutores, Rest} = string:to_integer(StringNumeroProdutores), 
     GerenciadorFila = spawn(?MODULE, gerenciadorFila, [self(), "GerenciadorFila", 10]),
-    spawn(?MODULE, produtor, [self(), "Produtor1", GerenciadorFila]),
-    spawn(?MODULE, produtor, [self(), "Produtor2", GerenciadorFila]),
-    spawn(?MODULE, produtor, [self(), "Produtor3", GerenciadorFila]),
+    criaProdutores(GerenciadorFila, NumeroProdutores),
     spawn(?MODULE, consumidor, [self(), "Consumidor1", GerenciadorFila]),
     spawn(?MODULE, consumidor, [self(), "Consumidor2", GerenciadorFila]),
     messageReceiveLoop().
+%% -----------------------------------------------------------------------------
+%% Cria os produtores
+criaProdutores(GerenciadorFila, 0) ->
+    done;
+criaProdutores(GerenciadorFila, NumeroProdutores) ->
+    NomeProdutor = string:concat("Produtor",stringFormat(NumeroProdutores)),
+    spawn(?MODULE, produtor, [self(), NomeProdutor, GerenciadorFila]),
+    criaProdutores(GerenciadorFila, NumeroProdutores-1).
 %% -----------------------------------------------------------------------------
 %% Loop de recebimento de mensagens para printar no output
 messageReceiveLoop() ->
@@ -101,16 +108,15 @@ produtor(Logger, Name, GerenciadorFila) ->
 %% -----------------------------------------------------------------------------
 %% Loop de producao
 loopProducao(Logger, Name, GerenciadorFila) ->
+    Logger ! {log, Name, self(), {status, waiting}},
     timer:sleep(1000),
-    Logger ! {log, Name, self(), " tentandoReservar"},
     GerenciadorFila ! {reserveSpace, Name, self()},
     receive
         listIsFull ->
             Logger ! {log, Name, self(), "Lista estava cheia, não vou produzir"};
         reserved -> 
-            Logger ! {log, Name, self(), "Item reservado"},
-            timer:sleep(5000),
-            Logger ! {log, Name, self(), "Item produzido"},
+            Logger ! {log, Name, self(), {status, producing}},
+            timer:sleep(3000),
             GerenciadorFila ! {itemProduced, Name}
     end,
     loopProducao(Logger, Name, GerenciadorFila).
@@ -156,3 +162,7 @@ indexOfConsumidor({Item, Consumidor}, List) -> indexOfConsumidor({Item, Consumid
 indexOfConsumidor(_, [], _)  -> not_found;
 indexOfConsumidor({Item, Consumidor}, [{Item, _, _, Consumidor}|_], Index) -> Index;
 indexOfConsumidor({Item, Consumidor}, [_|Tl], Index) -> indexOfConsumidor({Item, Consumidor}, Tl, Index+1).
+%% -----------------------------------------------------------------------------
+%% Transforma um valor em String
+stringFormat(Values) ->
+    lists:flatten(io_lib:format("~p", [Values])).

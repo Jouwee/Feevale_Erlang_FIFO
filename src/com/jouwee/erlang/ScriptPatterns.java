@@ -17,5 +17,7 @@ public interface ScriptPatterns {
     public static final Pattern PATTERN_SPLIT_LIST = Pattern.compile("(?:\\{(.*?),(.*?),(.*?),(.*?)\\})");
     /** Produtor iniciado */
     public static final Pattern PRODUTOR_STARTED = Pattern.compile("produtorStarted");
+    /** Troca de status de agente */
+    public static final Pattern STATUS_AGENTE = Pattern.compile("\\{status,(.*)\\}");
     
 }

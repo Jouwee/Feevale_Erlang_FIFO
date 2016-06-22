@@ -1,30 +1,22 @@
 package com.jouwee.erlang;
 
+import java.awt.Color;
+
 /**
  * Produtor
  * 
  * @author Nicolas Pohren
  */
-public class Produtor {
+public class Produtor extends Agente {
     
-    /** Nome do produtor */
-    private final String name;
-
     /**
      * Cria novo produtor
-     * @param name 
-     */
-    public Produtor(String name) {
-        this.name = name;
-    }
-    
-    /**
-     * Retorna o nome do produtor
      * 
-     * @return String
+     * @param name 
+     * @param status 
      */
-    public String getName() {
-        return name;
+    public Produtor(String name, StatusAgente status) {
+        super(name, status);
     }
     
 }

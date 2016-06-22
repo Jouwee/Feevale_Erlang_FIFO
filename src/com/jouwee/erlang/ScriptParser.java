@@ -139,6 +139,7 @@ public class ScriptParser implements ScriptPatterns {
     private void testMatchers(String processName, String pid, String content) {
         testUpdateList(content);
         testProdutorStarted(processName, pid, content);
+        testStatusAgent(processName, content);
     }
     
     /**
@@ -153,7 +154,22 @@ public class ScriptParser implements ScriptPatterns {
         if (!matcher.find()) {
             return;
         }
-        model.putProdutor(new Produtor(processName));
+        model.putProdutor(new Produtor(processName, StatusAgente.WAITING));
+    }
+    
+    /**
+     * Testa se um produtor foi criado
+     * 
+     * @param processName
+     * @param pid
+     * @param content 
+     */
+    private void testStatusAgent(String processName, String content) {
+        Matcher matcher = STATUS_AGENTE.matcher(content);
+        if (!matcher.find()) {
+            return;
+        }
+        model.putProdutor(new Produtor(processName, StatusAgente.forScript(matcher.group(1))));
     }
     
     /**

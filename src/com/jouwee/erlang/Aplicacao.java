@@ -38,13 +38,8 @@ public class Aplicacao extends JFrame {
         setResizable(false);
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(new PanelSimulacao(model));
-        getContentPane().add(new JButton(new AbstractAction("Gogogogo") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ErlangRunner.run("dataServer.erl", model);
-            }
-        }), BorderLayout.SOUTH);
-        
+        getContentPane().add(new PanelControle(model), BorderLayout.SOUTH);
+       
     }
     
 }

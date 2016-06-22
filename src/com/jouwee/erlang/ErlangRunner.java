@@ -24,13 +24,15 @@ public class ErlangRunner {
             
             ProcessBuilder builderCompilador = new ProcessBuilder(COMPILADOR, resourceName);
             builderCompilador.directory(new File(System.getProperty("java.io.tmpdir")));
-//            builderCompilador.inheritIO();
+            builderCompilador.inheritIO();
             Process compilacao = builderCompilador.start();
             System.out.println("compilando");
             compilacao.waitFor();
             System.out.println("compilou");
-            
-            ProcessBuilder builder = new ProcessBuilder(EXECUTAVEL, "-noshell", "-run", "dataServer", "main", "1");
+            // Converte os parâmetros para String
+            String sNumeroProdutores = String.valueOf(model.getParameters().getNumeroProdutores());
+            // Executa o Script Erlang
+            ProcessBuilder builder = new ProcessBuilder(EXECUTAVEL, "-noshell", "-run", "dataServer", "main", "10", sNumeroProdutores, "2", "1000", "100", "1000", "100");
             builder.directory(new File(System.getProperty("java.io.tmpdir")));
             Process process = builder.start();
             new ScriptParser(model).parseInBackground(process.getInputStream());
