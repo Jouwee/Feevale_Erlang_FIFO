@@ -9,25 +9,29 @@ import java.awt.Color;
  */
 public enum StatusAgente {
     
-    WAITING("waiting", Color.GRAY),
-    PRODUCING("producing", Color.YELLOW),
-    CONSUMING("consuming", Color.GREEN)
+    WAITING("waiting", Color.GRAY, "Ocioso"),
+    PRODUCING("producing", Color.YELLOW, "Produzindo"),
+    CONSUMING("consuming", Color.GREEN, "Consumindo")
     ;
     
     /** String no Script */
     private final String scriptString;
     /** Cor */
     private final Color color;
+    /** Descrição */
+    private final String description;
 
     /**
      * Status do item
      * 
      * @param scriptString 
      * @param color
+     * @param description
      */
-    private StatusAgente(String scriptString, Color color) {
+    private StatusAgente(String scriptString, Color color, String description) {
         this.scriptString = scriptString;
         this.color = color;
+        this.description = description;
     }
 
     /**
@@ -46,6 +50,15 @@ public enum StatusAgente {
      */
     public Color getColor() {
         return color;
+    }
+
+    /**
+     * Retorna a descrição do agente
+     * 
+     * @return String
+     */
+    public String getDescription() {
+        return description;
     }
     
     /**

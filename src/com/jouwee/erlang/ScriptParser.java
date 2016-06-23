@@ -97,6 +97,9 @@ public class ScriptParser implements ScriptPatterns {
         } else {
             continueParsingEnty(line);
         }
+        if (line.endsWith("#End")) {
+            parseLogEntry();
+        }
     }
     
     /**
@@ -106,7 +109,6 @@ public class ScriptParser implements ScriptPatterns {
      */
     private void parseNewLogEntry(String line) {
         logEntry = line.substring(8).trim();
-        parseLogEntry();
     }
     
     /**
@@ -114,14 +116,12 @@ public class ScriptParser implements ScriptPatterns {
      */
     private void continueParsingEnty(String line) {
         logEntry += line.trim();
-        parseLogEntry();
     }
     
     /**
      * Interpreta a entrada de log carregada
      */
     private void parseLogEntry() {
-        System.out.println(logEntry);
         Matcher matcherNamePid = PATTERN_NAME_PID.matcher(logEntry);
         if (!matcherNamePid.find()) {
             return;
@@ -137,11 +137,21 @@ public class ScriptParser implements ScriptPatterns {
      * @param content 
      */
     private void testMatchers(String processName, String pid, String content) {
-        testUpdateList(content);
-        testProdutorStarted(processName, pid, content);
-        testConsumidorStarted(processName, pid, content);
-        testStatusAgent(processName, content);
-        testProgressAgent(processName, content);
+        if (testProgressAgent(processName, content)) {
+            return;
+        }        
+        if (testUpdateList(content)) {
+            return;
+        }
+        if (testStatusAgent(processName, content)) {
+            return;
+        }
+        if (testProdutorStarted(processName, pid, content)) {
+            return;
+        }
+        if (testConsumidorStarted(processName, pid, content)) {
+            return;
+        }
     }
     
     /**
@@ -151,12 +161,13 @@ public class ScriptParser implements ScriptPatterns {
      * @param pid
      * @param content 
      */
-    private void testProdutorStarted(String processName, String pid, String content) {
+    private boolean testProdutorStarted(String processName, String pid, String content) {
         Matcher matcher = PRODUTOR_STARTED.matcher(content);
         if (!matcher.find()) {
-            return;
+            return false;
         }
         model.putProdutor(new Produtor(processName, StatusAgente.WAITING, 0));
+        return true;
     }
     
     /**
@@ -166,12 +177,13 @@ public class ScriptParser implements ScriptPatterns {
      * @param pid
      * @param content 
      */
-    private void testConsumidorStarted(String processName, String pid, String content) {
+    private boolean testConsumidorStarted(String processName, String pid, String content) {
         Matcher matcher = CONSUMIDOR_STARTED.matcher(content);
         if (!matcher.find()) {
-            return;
+            return false;
         }
         model.putConsumidor(new Consumidor(processName, StatusAgente.WAITING, 0));
+        return true;
     }
     
     /**
@@ -181,10 +193,10 @@ public class ScriptParser implements ScriptPatterns {
      * @param pid
      * @param content 
      */
-    private void testStatusAgent(String processName, String content) {
+    private boolean testStatusAgent(String processName, String content) {
         Matcher matcher = STATUS_AGENTE.matcher(content);
         if (!matcher.find()) {
-            return;
+            return false;
         }
         Agente agente = model.getAgente(processName);
         if (processName.startsWith("Produtor")) {
@@ -192,6 +204,7 @@ public class ScriptParser implements ScriptPatterns {
         } else {
             model.putConsumidor(new Consumidor(processName, StatusAgente.forScript(matcher.group(1)), agente.getPercentDone()));
         }
+        return true;
     }
     
     /**
@@ -201,10 +214,10 @@ public class ScriptParser implements ScriptPatterns {
      * @param pid
      * @param content 
      */
-    private void testProgressAgent(String processName, String content) {
+    private boolean testProgressAgent(String processName, String content) {
         Matcher matcher = PROGRESS_AGENTE.matcher(content);
         if (!matcher.find()) {
-            return;
+            return false;
         }
         float progress = Float.parseFloat(matcher.group(1));
         Agente agente = model.getAgente(processName);
@@ -213,6 +226,7 @@ public class ScriptParser implements ScriptPatterns {
         } else {
             model.putConsumidor(new Consumidor(processName, agente.getStatus(), progress));
         }
+        return true;
     }
     
     /**
@@ -220,10 +234,10 @@ public class ScriptParser implements ScriptPatterns {
      * 
      * @param content 
      */
-    private void testUpdateList(String content) {
+    private boolean testUpdateList(String content) {
         Matcher matcher = PATTERN_UPDATE_LIST.matcher(content);
         if (!matcher.find()) {
-            return;
+            return false;
         }
         Matcher elementosMatcher = PATTERN_SPLIT_LIST.matcher(matcher.group(1));
         List<ItemFila> fila = new ArrayList<>();
@@ -231,6 +245,7 @@ public class ScriptParser implements ScriptPatterns {
             fila.add(factoryItemFila(elementosMatcher));
         }
         model.setFila(fila.toArray(new ItemFila[] {}));
+        return true;
     }
     
     /**
@@ -242,9 +257,9 @@ public class ScriptParser implements ScriptPatterns {
     private ItemFila factoryItemFila(Matcher matcher) {
         String status = matcher.group(1);
         String id = matcher.group(2);
-        String produtor = matcher.group(3);
-        String consumidor = matcher.group(4);
-        return new ItemFila(ItemStatus.forScript(status));
+        String produtor = matcher.group(3).replace("[]", "");
+        String consumidor = matcher.group(4).replace("[]", "");
+        return new ItemFila(ItemStatus.forScript(status), produtor, consumidor);
     }
 
 }

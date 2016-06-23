@@ -19,7 +19,7 @@ import javax.swing.JComponent;
 public class PanelSimulacao extends JComponent implements PropertyChangeListener {
 
     /** Tamanho dos objetos de agentes */
-    private static final Dimension SIZE_AGENT = new Dimension(150, 60);
+    private static final Dimension SIZE_AGENT = new Dimension(125, 60);
     /** Tamanho dos objetos de item da fila */
     private static final int SIZE_ITEM_FILA = 60;
     /** Arco */
@@ -32,6 +32,29 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
      */
     public PanelSimulacao() {
         this(null);
+    }
+    
+    @Override
+    public Dimension getPreferredSize() {
+        int height = getHeight() - 20;
+        int width = 100;
+        int wt;
+        wt = (model.getProdutores().size()) * (SIZE_AGENT.width + 5) + 60;
+        if (wt > width) {
+            width = wt;
+        }
+        wt = (model.getConsumidores().size()) * (SIZE_AGENT.width + 5) + 60;
+        if (wt > width) {
+            width = wt;
+        }
+        if (model.getFila() != null) {
+            wt = ((model.getFila().length) / 4) * (SIZE_ITEM_FILA + 5) + 60;
+            if (wt > width) {
+                width = wt;
+            }
+        }
+        return new Dimension(width, height);
+
     }
     
     /**
@@ -47,6 +70,7 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         repaint();
+        revalidate();
     }
 
     @Override
@@ -142,6 +166,8 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
         g2d.drawRoundRect(x, y, SIZE_AGENT.width, SIZE_AGENT.height, ARC, ARC);
         g2d.setFont(new Font("Calibri", Font.BOLD, 16));
         g2d.drawString(agente.getName(), x + 5, y + 20);
+        g2d.setFont(new Font("Calibri", Font.PLAIN, 11));
+        g2d.drawString(agente.getStatus().getDescription(), x + 5, y + 35);
         g2d.fillRect(x, y + 50, (int)(SIZE_AGENT.width * agente.getPercentDone()), 5);
         g2d.dispose();
     }
@@ -178,6 +204,19 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
         g2d.fillRoundRect(x, y, SIZE_ITEM_FILA, SIZE_AGENT.height, ARC, ARC);
         g2d.setColor(Color.BLACK);
         g2d.drawRoundRect(x, y, SIZE_ITEM_FILA, SIZE_AGENT.height, ARC, ARC);
+        g2d.setFont(new Font("Calibri", Font.BOLD, 16));
+        g2d.drawString(String.valueOf(i), x + 5, y + 20);
+        if (!item.getConsumidor().isEmpty()) {
+            String prod = "C"+item.getProdutor().substring(8);
+            g2d.drawString(prod, x + 5, y + 35);
+        } else {
+            if (!item.getProdutor().isEmpty()) {
+                String prod = "P"+item.getProdutor().substring(8);
+                g2d.drawString(prod, x + 5, y + 35);
+            }
+        }
+        g2d.setFont(new Font("Calibri", Font.PLAIN, 11));
+        g2d.drawString(item.getStatus().getDescription(), x + 5, y + 50);
         g2d.dispose();
     }
     

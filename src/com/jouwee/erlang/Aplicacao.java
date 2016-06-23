@@ -1,10 +1,8 @@
 package com.jouwee.erlang;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 
 /**
  * Classe principal da aplicação
@@ -38,7 +36,7 @@ public class Aplicacao extends JFrame {
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(new PanelSimulacao(model));
+        getContentPane().add(new JScrollPane(new PanelSimulacao(model)));
         getContentPane().add(new PanelControle(model), BorderLayout.SOUTH);
        
     }

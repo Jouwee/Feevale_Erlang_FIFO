@@ -20,7 +20,7 @@ main([StringTamanhoFila, StringNumeroProdutores, StringNumeroConsumidores, Strin
     messageReceiveLoop().
 %% -----------------------------------------------------------------------------
 %% Cria os produtores
-criaProdutores(GerenciadorFila, 0, TempoMedioProducao, DesvioPadraoProducao, TempoEspera) ->
+criaProdutores(_, 0, _, _, _) ->
     done;
 criaProdutores(GerenciadorFila, NumeroProdutores, TempoMedioProducao, DesvioPadraoProducao, TempoEspera) ->
     NomeProdutor = string:concat("Produtor",stringFormat(NumeroProdutores)),
@@ -28,7 +28,7 @@ criaProdutores(GerenciadorFila, NumeroProdutores, TempoMedioProducao, DesvioPadr
     criaProdutores(GerenciadorFila, NumeroProdutores-1, TempoMedioProducao, DesvioPadraoProducao, TempoEspera).
 %% -----------------------------------------------------------------------------
 %% Cria os consumidores
-criaConsumidores(GerenciadorFila, 0, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera) ->
+criaConsumidores(_, 0, _, _, _) ->
     done;
 criaConsumidores(GerenciadorFila, NumeroConsumidores, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera) ->
     NomeConsumidor = string:concat("Consumidor",stringFormat(NumeroConsumidores)),
@@ -39,7 +39,7 @@ criaConsumidores(GerenciadorFila, NumeroConsumidores, TempoMedioConsumo, DesvioP
 messageReceiveLoop() ->
     receive
         {log, Name, Pid, Message} -> 
-            io:format("#Logger ~s ~p ~p\n", [Name, Pid, Message]),
+            io:format("#Logger ~s ~p ~p #End\n", [Name, Pid, Message]),
             messageReceiveLoop()
     end.
 %% -----------------------------------------------------------------------------
@@ -47,7 +47,6 @@ messageReceiveLoop() ->
 %% -----------------------------------------------------------------------------
 %% Método principal do processo de gerenciamento de filas
 gerenciadorFila(Logger, Name, TamanhoFila) ->
-    Logger ! {log, Name, self(), "Iniciei o gerenciador da fila"},
     Fila = criaListaVazia(TamanhoFila),
     gerenciadorFilaLoop(Logger, Name, TamanhoFila, Fila, 1).
 %% -----------------------------------------------------------------------------
@@ -56,25 +55,23 @@ gerenciadorFilaLoop(Logger, Name, TamanhoFila, Fila, NextId) ->
     Logger ! {log, Name, self(), {updateFila, Fila}},
     receive
         {reserveSpace, NameProdutor, PidProdutor} -> 
-            gerenciadorFilaLoop(Logger, Name, TamanhoFila, reservaItem(Logger, NameProdutor, PidProdutor, Fila), NextId);
+            gerenciadorFilaLoop(Logger, Name, TamanhoFila, reservaItem(NameProdutor, PidProdutor, Fila), NextId);
         {itemProduced, NameProdutor} -> 
-            gerenciadorFilaLoop(Logger, Name, TamanhoFila, produzItem(Logger, NameProdutor, NextId, Fila), NextId + 1);
+            gerenciadorFilaLoop(Logger, Name, TamanhoFila, produzItem(NameProdutor, NextId, Fila), NextId + 1);
         {reserveConsumeItem, NameConsumidor, PidConsumidor} -> 
-            gerenciadorFilaLoop(Logger, Name, TamanhoFila, reservaConsumoItem(Logger, NameConsumidor, PidConsumidor, Fila), NextId);
+            gerenciadorFilaLoop(Logger, Name, TamanhoFila, reservaConsumoItem(NameConsumidor, PidConsumidor, Fila), NextId);
         {itemConsumed, NameConsumidor} -> 
-            gerenciadorFilaLoop(Logger, Name, TamanhoFila, consomeItem(Logger, NameConsumidor, Fila), NextId)
+            gerenciadorFilaLoop(Logger, Name, TamanhoFila, consomeItem(NameConsumidor, Fila), NextId)
     end,
     gerenciadorFilaLoop(Logger, Name, TamanhoFila, Fila, NextId).
 %% -----------------------------------------------------------------------------
 %% Reserva uma ocorrência um item
-reservaItem(Logger, Name, Pid, Fila) ->
-    Logger ! {log, Name, self(), "reservaItem"},
+reservaItem(Name, Pid, Fila) ->
     IndexFirstZero = indexOfStatus({empty}, Fila),
     if
         IndexFirstZero == not_found -> 
             Retorno = Fila,
-            Pid ! listIsFull,
-            Logger ! {log, Name, self(), "listIsFull"};
+            Pid ! listIsFull;
         true -> 
             Retorno = lists:sublist(Fila, IndexFirstZero - 1) ++ [{reserved, 0, Name, ""}] ++ lists:nthtail(IndexFirstZero,Fila),
             Pid ! reserved
@@ -82,14 +79,12 @@ reservaItem(Logger, Name, Pid, Fila) ->
     Retorno.
 %% -----------------------------------------------------------------------------
 %% Produz um item
-produzItem(Logger, Name, Id, Fila) ->
-    Logger ! {log, Name, self(), "addToList"},
+produzItem(Name, Id, Fila) ->
     Index = indexOfProdutor({reserved, Name}, Fila),
     lists:sublist(Fila,Index - 1) ++ [{produced, Id, Name, ""}] ++ lists:nthtail(Index,Fila).
 %% -----------------------------------------------------------------------------
 %% Reserva o consumo de um item
-reservaConsumoItem(Logger, Name, Pid, Fila) ->
-    Logger ! {log, Name, self(), "reservaItemParaConsumo"},
+reservaConsumoItem(Name, Pid, Fila) ->
     Index = indexOfStatus({produced}, Fila),
     if
         Index == not_found -> 
@@ -103,8 +98,7 @@ reservaConsumoItem(Logger, Name, Pid, Fila) ->
     Retorno.
 %% -----------------------------------------------------------------------------
 %% Consome um item
-consomeItem(Logger, Name, Fila) ->
-    Logger ! {log, Name, self(), "consomeItem"},
+consomeItem(Name, Fila) ->
     Index = indexOfConsumidor({reservedForConsumption, Name}, Fila),
     lists:sublist(Fila,Index - 1) ++ lists:nthtail(Index,Fila) ++ [{empty, 0, "", ""}].
 %% -----------------------------------------------------------------------------
@@ -127,11 +121,10 @@ produtor(Logger, Name, GerenciadorFila, TempoMedioProducao, DesvioPadraoProducao
 %% Loop de producao
 loopProducao(Logger, Name, GerenciadorFila, TempoMedioProducao, DesvioPadraoProducao, TempoEspera) ->
     Logger ! {log, Name, self(), {status, waiting}},
-    timer:sleep(TempoEspera),
     GerenciadorFila ! {reserveSpace, Name, self()},
     receive
         listIsFull ->
-            Logger ! {log, Name, self(), "Lista estava cheia, não vou produzir"};
+            timer:sleep(TempoEspera);
         reserved -> 
             Logger ! {log, Name, self(), {status, producing}},
             wait(Logger, Name, TempoMedioProducao + (random:uniform(DesvioPadraoProducao * 2) - DesvioPadraoProducao)),
@@ -152,10 +145,10 @@ consumidor(Logger, Name, GerenciadorFila, TempoMedioConsumo, DesvioPadraoConsumo
 %% Loop de consumidor
 loopConsumidor(Logger, Name, GerenciadorFila, TempoMedioConsumo, DesvioPadraoConsumo, TempoEspera) ->
     Logger ! {log, Name, self(), {status, waiting}},
-    timer:sleep(TempoEspera),
     GerenciadorFila ! {reserveConsumeItem, Name, self()},
     receive
         listIsEmpty -> 
+            timer:sleep(TempoEspera),
             done;
         reserved -> 
             Logger ! {log, Name, self(), {status, consuming}},
@@ -171,11 +164,11 @@ wait(Logger, Name, Total) -> wait(Logger, Name, Total, Total).
 wait(Logger, Name, Total, Remaining) -> 
     Logger ! {log, Name, self(), {progress, 1 - (Remaining / Total)}},
     if 
-        Remaining < 10 ->
+        Remaining < 30 ->
             timer:sleep(Remaining);
         true ->
-            timer:sleep(10),
-            wait(Logger, Name, Total, Remaining - 10)
+            timer:sleep(30),
+            wait(Logger, Name, Total, Remaining - 30)
     end.
 %% -----------------------------------------------------------------------------
 %% Retorna o índice de um item em uma lista
