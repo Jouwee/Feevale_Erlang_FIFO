@@ -3,6 +3,7 @@ package com.jouwee.erlang;
 import java.awt.BorderLayout;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
+import javax.swing.UIManager;
 
 /**
  * Classe principal da aplicação
@@ -14,7 +15,8 @@ public class Aplicacao extends JFrame {
     /** Modelo do Script */
     public final ScriptModel model;
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         Aplicacao app = new Aplicacao();
         app.setVisible(true);
     }

@@ -9,10 +9,10 @@ import java.awt.Color;
  */
 public enum ItemStatus {
     
-    EMPTY("empty", Color.GRAY, "Vazio"),
-    BEING_PRODUCED("reserved", Color.YELLOW, "Produz."),
-    PRODUCED("produced", Color.ORANGE, "Aguard."),
-    BEING_CONSUMED("reservedForConsumption", Color.GREEN, "Consum.")
+    EMPTY("empty", Color.LIGHT_GRAY, "Vazio"),
+    BEING_PRODUCED("reserved", new Color(0x6dbfff), "Produz."),
+    PRODUCED("produced", new Color(0xfdff7f), "Aguard."),
+    BEING_CONSUMED("reservedForConsumption", new Color(0x83de83), "Consum.")
     ;
     
     /** String no Script */

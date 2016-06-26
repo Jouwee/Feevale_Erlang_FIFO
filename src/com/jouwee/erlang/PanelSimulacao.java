@@ -168,7 +168,9 @@ public class PanelSimulacao extends JComponent implements PropertyChangeListener
         g2d.drawString(agente.getName(), x + 5, y + 20);
         g2d.setFont(new Font("Calibri", Font.PLAIN, 11));
         g2d.drawString(agente.getStatus().getDescription(), x + 5, y + 35);
-        g2d.fillRect(x, y + 50, (int)(SIZE_AGENT.width * agente.getPercentDone()), 5);
+        if (agente.getStatus() != StatusAgente.WAITING) {
+            g2d.fillRect(x, y + 50, (int)(SIZE_AGENT.width * agente.getPercentDone()), 5);
+        }
         g2d.dispose();
     }
     

@@ -9,9 +9,9 @@ import java.awt.Color;
  */
 public enum StatusAgente {
     
-    WAITING("waiting", Color.GRAY, "Ocioso"),
-    PRODUCING("producing", Color.YELLOW, "Produzindo"),
-    CONSUMING("consuming", Color.GREEN, "Consumindo")
+    WAITING("waiting", Color.LIGHT_GRAY, "Ocioso"),
+    PRODUCING("producing", new Color(0x6dbfff), "Produzindo"),
+    CONSUMING("consuming", new Color(0x83de83), "Consumindo")
     ;
     
     /** String no Script */
